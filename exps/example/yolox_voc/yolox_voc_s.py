@@ -26,23 +26,21 @@ class Exp(MyExp):
 
         return VOCDetection(
             data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
-            image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
+            image_sets=[("2007", "trainval"), ("2012", "trainval")],
             img_size=self.input_size,
-            preproc=TrainTransform(
-                max_labels=50,
-                flip_prob=self.flip_prob,
-                hsv_prob=self.hsv_prob),
+            preproc=TrainTransform(max_labels=50, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob),
             cache=cache,
             cache_type=cache_type,
         )
 
     def get_eval_dataset(self, **kwargs):
         from yolox.data import VOCDetection, ValTransform
+
         legacy = kwargs.get("legacy", False)
 
         return VOCDetection(
             data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
-            image_sets=[('2007', 'test')],
+            image_sets=[("2007", "test")],
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
         )
@@ -51,8 +49,7 @@ class Exp(MyExp):
         from yolox.evaluators import VOCEvaluator
 
         return VOCEvaluator(
-            dataloader=self.get_eval_loader(batch_size, is_distributed,
-                                            testdev=testdev, legacy=legacy),
+            dataloader=self.get_eval_loader(batch_size, is_distributed, testdev=testdev, legacy=legacy),
             img_size=self.test_size,
             confthre=self.test_conf,
             nmsthre=self.nmsthre,

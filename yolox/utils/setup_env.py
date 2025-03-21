@@ -42,9 +42,7 @@ def configure_omp(num_threads=1):
                 "\n***************************************************************\n"
                 "We set `OMP_NUM_THREADS` for each process to {} to speed up.\n"
                 "please further tune the variable for optimal performance.\n"
-                "***************************************************************".format(
-                    os.environ["OMP_NUM_THREADS"]
-                )
+                "***************************************************************".format(os.environ["OMP_NUM_THREADS"])
             )
 
 

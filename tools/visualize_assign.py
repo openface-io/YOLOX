@@ -18,7 +18,6 @@ from yolox.tools.train import make_parser
 
 
 class AssignVisualizer(Trainer):
-
     def __init__(self, exp: Exp, args):
         super().__init__(exp, args)
         self.batch_cnt = 0
