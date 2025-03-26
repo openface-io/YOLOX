@@ -145,6 +145,7 @@ class YOLOXHead(nn.Module):
         x_shifts = []
         y_shifts = []
         expanded_strides = []
+        outputs_train = []
 
         for k, (cls_conv, reg_conv, stride_this_level, x) in enumerate(
             zip(self.cls_convs, self.reg_convs, self.strides, xin)
@@ -161,6 +162,7 @@ class YOLOXHead(nn.Module):
             obj_output = self.obj_preds[k](reg_feat)
 
             if self.training:
+                out_train = torch.cat([reg_output, obj_output.sigmoid(), cls_output.sigmoid()], 1)
                 output = torch.cat([reg_output, obj_output, cls_output], 1)
                 output, grid = self.get_output_and_grid(output, k, stride_this_level, xin[0].type())
                 x_shifts.append(grid[:, :, 0])
@@ -173,12 +175,22 @@ class YOLOXHead(nn.Module):
                     reg_output = reg_output.permute(0, 1, 3, 4, 2).reshape(batch_size, -1, 4)
                     origin_preds.append(reg_output.clone())
 
+                outputs_train.append(out_train)
+
             else:
                 output = torch.cat([reg_output, obj_output.sigmoid(), cls_output.sigmoid()], 1)
 
             outputs.append(output)
 
         if self.training:
+
+            self.hw = [x.shape[-2:] for x in outputs_train]
+            # [batch, n_anchors_all, 85]
+            outputs_train = torch.cat([x.flatten(start_dim=2) for x in outputs_train], dim=2).permute(0, 2, 1)
+            if self.decode_in_inference:
+                outputs_train = self.decode_outputs(outputs_train, dtype=xin[0].type())
+    
+            
             return self.get_losses(
                 imgs,
                 x_shifts,
@@ -188,7 +200,7 @@ class YOLOXHead(nn.Module):
                 torch.cat(outputs, 1),
                 origin_preds,
                 dtype=xin[0].dtype,
-            )
+            ), outputs_train
         else:
             self.hw = [x.shape[-2:] for x in outputs]
             # [batch, n_anchors_all, 85]
