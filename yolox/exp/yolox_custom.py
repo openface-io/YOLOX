@@ -13,6 +13,9 @@ class yolox_custom_exp(MyExp):
         elif model_name=='yolox_m':
             self.depth = 0.67
             self.width = 0.75
+        elif model_name=='yolox_l':
+            self.depth = 1.0
+            self.width = 1.0
         else:
             raise TypeError("Provide a model name")
 
