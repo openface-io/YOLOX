@@ -24,6 +24,7 @@ class YOLOXHead(nn.Module):
         in_channels=[256, 512, 1024],
         act="silu",
         depthwise=False,
+        pos_weight=None
     ):
         """
         Args:
@@ -123,7 +124,12 @@ class YOLOXHead(nn.Module):
 
         self.use_l1 = False
         self.l1_loss = nn.L1Loss(reduction="none")
-        self.bcewithlog_loss = nn.BCEWithLogitsLoss(reduction="none")
+        self.bcewithlog_loss_obj = nn.BCEWithLogitsLoss(reduction="none")
+        # Different weights for different classes
+        self.pos_weight = pos_weight
+        self.bcewithlog_loss_cls = nn.BCEWithLogitsLoss(reduction="none", pos_weight=pos_weight)
+
+
         self.iou_loss = IOUloss(reduction="none")
         self.strides = strides
         self.grids = [torch.zeros(1)] * len(in_channels)
@@ -365,8 +371,8 @@ class YOLOXHead(nn.Module):
 
         num_fg = max(num_fg, 1)
         loss_iou = (self.iou_loss(bbox_preds.view(-1, 4)[fg_masks], reg_targets)).sum() / num_fg
-        loss_obj = (self.bcewithlog_loss(obj_preds.view(-1, 1), obj_targets)).sum() / num_fg
-        loss_cls = (self.bcewithlog_loss(cls_preds.view(-1, self.num_classes)[fg_masks], cls_targets)).sum() / num_fg
+        loss_obj = (self.bcewithlog_loss_obj(obj_preds.view(-1, 1), obj_targets)).sum() / num_fg
+        loss_cls = (self.bcewithlog_loss_cls(cls_preds.view(-1, self.num_classes)[fg_masks], cls_targets)).sum() / num_fg
         if self.use_l1:
             loss_l1 = (self.l1_loss(origin_preds.view(-1, 4)[fg_masks], l1_targets)).sum() / num_fg
         else:
